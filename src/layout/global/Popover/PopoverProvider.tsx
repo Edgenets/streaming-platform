@@ -2,9 +2,8 @@ import React, { createContext, PropsWithChildren, useContext, useEffect, useStat
 import { preloadShow } from "@lib/redux/reducer/shows";
 import { getRecommendations } from "@lib/api/tmdb";
 import { deleteParamFromQuery } from "@lib/util";
-import { useDispatch } from "react-redux";
 import { useRouter } from "next/router";
-import { useAppSelector } from "@lib/redux";
+import { useAppDispatch, useAppSelector } from "@lib/redux";
 
 interface PopoverContext {
     entry: Api.TVDetails;
@@ -12,10 +11,12 @@ interface PopoverContext {
     handleClose: () => Promise<boolean>;
 }
 
+
+
 const PopoverContext = createContext<PopoverContext>({} as PopoverContext);
 
 export const PopoverProvider: React.FC<PropsWithChildren> = ({ children }) => {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch(); // 使用类型化的 dispatch
     const router = useRouter();
     const { id } = router.query;
     const { entities, fetchRequests } = useAppSelector(state => state.shows);
@@ -35,7 +36,7 @@ export const PopoverProvider: React.FC<PropsWithChildren> = ({ children }) => {
         if (entity) {
             setEntry(entity);
         } else if (!fetchRequests.includes(numId)) {
-            dispatch(preloadShow({ id: numId }));
+            dispatch(preloadShow({ id: numId })); // 使用类型化的 dispatch
         }
     }, [id, entities, dispatch, fetchRequests]);
 

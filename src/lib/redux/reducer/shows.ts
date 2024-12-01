@@ -16,18 +16,23 @@ const initialState: ShowsState = {
     fetchRequests: [],
 };
 
+// 定义异步 Thunk
 export const preloadShow = createAsyncThunk<Api.TVDetails | null, ThunkParams>(
     "shows/preloadShow",
-    async ({ id }, thunkAPI) => {
-        const { shows } = thunkAPI.getState() as AppState;
+    async ({ id }, { getState, dispatch }) => {
+        const state = getState() as AppState;
 
-        if (!!shows.entities[id]) {
+        // 如果实体已存在，返回 null
+        if (state.shows.entities[id]) {
             return null;
         }
 
-        thunkAPI.dispatch(registerFetchRequest(id));
+        // 注册请求
+        dispatch(registerFetchRequest(id));
 
-        return await getShowById(id);
+        // 获取数据
+        const show = await getShowById(id);
+        return show;
     }
 );
 

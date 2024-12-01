@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useRef } from "react";
 import { preloadShow } from "../redux/reducer/shows";
-import { useDispatch } from "react-redux";
+import { useAppDispatch } from "../redux"; // 使用自定义的 dispatch
 
 interface PrefetchData {
     onClick: () => void;
@@ -17,7 +17,7 @@ interface PrefetchData {
  */
 export const usePreload = (id: number): PrefetchData => {
     const router = useRouter();
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch(); // 使用类型化的 dispatch
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const onClick = () => {
@@ -28,7 +28,7 @@ export const usePreload = (id: number): PrefetchData => {
 
     const onMouseEnter = () => {
         timeoutRef.current = setTimeout(() => {
-            dispatch(preloadShow({ id }));
+            dispatch(preloadShow({ id })); // 确保 dispatch 类型匹配
         }, 400);
     };
 

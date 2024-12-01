@@ -1,6 +1,5 @@
 import React, { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
-import { useAppSelector } from "@lib/redux";
+import { useAppDispatch, useAppSelector } from "@lib/redux";
 import { fetchEpisodes } from "@lib/redux/reducer/seasons";
 import { SeasonsOverviewProps } from "./SeasonsOverview";
 
@@ -21,7 +20,7 @@ export const SeasonOverviewProvider: React.FC<PropsWithChildren<SeasonsOverviewP
     seasons,
     children,
 }) => {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch(); // 使用自定义的 dispatch
     const { seasonResults } = useAppSelector(state => state.seasons);
     const [activeSeasonIndex, setActiveSeasonIndex] = useState<number>(0);
 

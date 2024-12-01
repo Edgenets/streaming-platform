@@ -43,3 +43,18 @@ export const getShowByString = async (string: string): Promise<Api.TV[]> => {
     const { results } = await db<Api.Page<Api.TV>>(`/search/tv`, `&query=${string}`);
     return results;
 };
+
+
+// lib/api/tmdb.ts
+export const getAllShowIds = async (): Promise<number[]> => {
+    // 假设 API 支持获取所有节目 ID
+    // const response = await fetch("https://example.com/api/shows");
+    // const data = await response.json();
+    // return data.map((show: { id: number }) => show.id);
+    const json = [];
+    // json.push({id: 73375});
+    // json.push(73375);
+    json.push(60625);
+    json.push(93405);
+    return json;
+};

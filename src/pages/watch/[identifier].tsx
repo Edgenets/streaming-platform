@@ -1,7 +1,7 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import styled from "styled-components";
-import { GetServerSideProps } from "next";
-import { getShowById } from "@lib/api/tmdb";
+import { GetStaticProps, GetStaticPaths } from "next";
+import { getShowById, getAllShowIds } from "@lib/api/tmdb"; // 假设 API 函数从 @lib/api/tmdb 引入
 import { useAppSelector } from "@lib/redux";
 import { Spinner } from "../../layout/shared/Spinner";
 import { checkBrowserCompatibility } from "@lib/browser";
@@ -10,6 +10,7 @@ import { Player } from "../../layout/player/Player";
 import { Content } from "@css/helper/content";
 import { Meta } from "@lib/meta";
 
+// Styled components
 const PlayerWrapper = styled.div``;
 
 const SpinnerWrapper = styled.div`
@@ -27,16 +28,22 @@ const PlayerIncompatible = styled.div`
     text-align: center;
 `;
 
+// Interface for props
 interface WatchProps {
     show: Api.TVDetails;
-    browserCompatible: boolean;
 }
 
-const Watch: React.FC<WatchProps> = ({ show, browserCompatible }) => {
+const Watch: React.FC<WatchProps> = ({ show }) => {
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const waiting = useAppSelector(state => state.player.waiting);
+    const waiting = useAppSelector((state) => state.player.waiting);
 
-    if (!browserCompatible)
+    const [browserCompatible, setBrowserCompatible] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        setBrowserCompatible(checkBrowserCompatibility());
+    }, []);
+
+    if (browserCompatible === false)
         return (
             <PlayerIncompatible>
                 <Content>
@@ -44,6 +51,13 @@ const Watch: React.FC<WatchProps> = ({ show, browserCompatible }) => {
                     best experience!
                 </Content>
             </PlayerIncompatible>
+        );
+
+    if (browserCompatible === null)
+        return (
+            <SpinnerWrapper>
+                <Spinner />
+            </SpinnerWrapper>
         );
 
     return (
@@ -59,32 +73,54 @@ const Watch: React.FC<WatchProps> = ({ show, browserCompatible }) => {
     );
 };
 
-export const getServerSideProps: GetServerSideProps = async ctx => {
-    const id = ctx.params?.identifier;
-
-    if (!id || typeof id !== "string") {
+// Static paths generation
+export const getStaticPaths: GetStaticPaths = async () => {
+    try {
+        const ids = await getAllShowIds(); // 获取所有 show IDs
         return {
-            notFound: true,
+            paths: ids.map((id) => ({ params: { identifier: id.toString() } })),
+            fallback: "blocking", // 支持动态生成
+        };
+    } catch (error) {
+        console.error("Error in getStaticPaths:", error);
+        return {
+            paths: [],
+            fallback: "blocking", // 避免构建失败
         };
     }
+};
 
-    const show = await getShowById(parseInt(id));
+// Static props generation
+export const getStaticProps: GetStaticProps = async (ctx) => {
+    try {
+        const id = ctx.params?.identifier;
 
-    if (!show) {
+        if (!id || typeof id !== "string") {
+            return {
+                notFound: true,
+            };
+        }
+
+        const show = await getShowById(parseInt(id));
+
+        if (!show) {
+            return {
+                notFound: true,
+            };
+        }
+
         return {
-            notFound: true,
+            props: {
+                show,
+            },
+            // revalidate: 60, // ISR：每 60 秒重新生成
+        };
+    } catch (error) {
+        console.error("Error in getStaticProps:", error);
+        return {
+            notFound: true, // 如果 API 请求失败，返回 404 页面
         };
     }
-
-    const compatible = checkBrowserCompatibility(ctx);
-
-    return {
-        props: {
-            show,
-            browserCompatible: compatible,
-            hideNavigation: compatible,
-        },
-    };
 };
 
 export default Watch;

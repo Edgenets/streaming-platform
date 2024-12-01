@@ -1,50 +1,22 @@
-import thunk, { ThunkMiddleware } from "redux-thunk";
+import { configureStore } from "@reduxjs/toolkit";
+import { TypedUseSelectorHook, useSelector, useDispatch } from "react-redux";
 import reducer from "./reducer";
-import { Middleware, Store, configureStore } from "@reduxjs/toolkit";
-import { useMemo } from "react";
-import { TypedUseSelectorHook, useSelector } from "react-redux";
 
 export const REDUX_INITIAL_STATE = "__REDUX_STATE__";
-const middleware: Middleware[] = [thunk as ThunkMiddleware];
 
-let store: Store;
+// 创建 Redux Store
+export const store = configureStore({
+    reducer,
+    middleware: getDefaultMiddleware => getDefaultMiddleware(),
+    devTools: process.env.NODE_ENV !== "production",
+});
 
-if (process.env.NODE_ENV !== "production") {
-    // middleware.push(createLogger());
-}
+// 类型定义
+export type AppState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
 
-const makeStore = (preloadedState?: Partial<AppState>) => {
-    return configureStore({
-        reducer,
-        middleware: getDefaultMiddleware => getDefaultMiddleware().concat(middleware),
-        devTools: process.env.NODE_ENV !== "production",
-        preloadedState,
-    });
-};
-
-const initializeStore = (preloadedState?: Partial<AppState>) => {
-    let _store = store ?? makeStore(preloadedState);
-
-    if (preloadedState && store) {
-        _store = makeStore({ ...store.getState(), ...preloadedState });
-    }
-
-    if (typeof window === "undefined") {
-        return _store;
-    }
-
-    if (!store) {
-        store = _store;
-    }
-
-    return _store;
-};
-
-export const useRedux = (pageProps: { [REDUX_INITIAL_STATE]: Partial<AppState> }) => {
-    const state = pageProps[REDUX_INITIAL_STATE];
-    return useMemo(() => initializeStore(state), [state]);
-};
-
-export type AppState = ReturnType<typeof reducer>;
-
+// 自定义 Hooks
+export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<AppState> = useSelector;
+
+export default store;

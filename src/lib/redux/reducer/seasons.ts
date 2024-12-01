@@ -1,6 +1,4 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getEpisodesBySeason } from "@lib/api/tmdb";
-import { AppState } from "../index";
 
 interface SeasonsState {
     seasonResults: Record<number, Record<number, Api.Episode[]>>;
@@ -17,14 +15,12 @@ const initialState: SeasonsState = {
 
 export const fetchEpisodes = createAsyncThunk<Api.Episode[] | null, ThunkParams>(
     "seasons/fetchEpisodes",
-    async ({ showId, seasonNumber }, thunkAPI) => {
-        const { seasons } = thunkAPI.getState() as AppState;
-
-        if (seasons.seasonResults[showId] && seasons.seasonResults[showId][seasonNumber]) {
-            return null;
+    async ({ showId, seasonNumber }) => {
+        const response = await fetch(`/api/shows/${showId}/seasons/${seasonNumber}/episodes`);
+        if (!response.ok) {
+            throw new Error("Failed to fetch episodes");
         }
-
-        return await getEpisodesBySeason(showId, seasonNumber);
+        return await response.json();
     }
 );
 

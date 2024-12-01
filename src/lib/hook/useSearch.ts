@@ -1,5 +1,5 @@
-import debounce from "lodash.debounce";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useDebouncedCallback } from "use-debounce";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { getShowByString } from "@lib/api/tmdb";
 
 export const useSearch = () => {
@@ -8,11 +8,9 @@ export const useSearch = () => {
     const [suggestions, setSuggestions] = useState<Api.TV[]>([]);
 
     useEffect(() => {
-        if (!inputFocusRef.current) {
-            return;
+        if (inputFocusRef.current) {
+            inputFocusRef.current.focus();
         }
-
-        inputFocusRef.current.focus();
     }, []);
 
     const handleQuery = async (value: string) => {
@@ -25,7 +23,7 @@ export const useSearch = () => {
         startTransition(() => setSuggestions(res));
     };
 
-    const handleInput = useCallback(debounce(handleQuery, 150), []);
+    const handleInput = useDebouncedCallback(handleQuery, 150);
 
     return { inputFocusRef, suggestions, handleInput };
 };

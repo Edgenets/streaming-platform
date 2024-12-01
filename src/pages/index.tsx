@@ -1,18 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
 import useInfiniteScroll from "react-infinite-scroll-hook";
 import { GetStaticProps } from "next";
-import { getGenres, getShowById, getShowsByGenres, getTrending } from "@lib/api/tmdb";
+import { getGenres, getShowById, getTrending } from "@lib/api/tmdb";
 import { FEATURED_SHOW } from "@lib/api/tmdb/config";
-import { Opener } from "../layout/shared/Opener";
-import { AppState, REDUX_INITIAL_STATE, useAppSelector } from "@lib/redux";
-import { TrendingSlider } from "../layout/shared/TrendingSlider/TrendingSlider";
-import { fetchGenrePage, INFINITE_SCROLL_SKIP } from "@lib/redux/reducer/genre";
+import { useAppDispatch, useAppSelector } from "@lib/redux";
+import { setGenres, fetchGenrePage, resetGenreState } from "@lib/redux/reducer/genre";
 import { BasicSlider } from "../layout/shared/BasicSlider/BasicSlider";
-import { useWatchlist } from "@lib/watchlist/context";
 import { Spinner } from "../layout/shared/Spinner";
-import { useDispatch } from "react-redux";
 import { Meta } from "@lib/meta";
+import { Opener } from "../layout/shared/Opener";
+import { TrendingSlider } from "../layout/shared/TrendingSlider/TrendingSlider";
+import { useWatchlist } from "@lib/watchlist/context";
 
 const PageWrapper = styled.div`
     padding-bottom: 12rem;
@@ -42,10 +41,16 @@ interface HomeProps {
     genres: Api.Genre[];
 }
 
-const Home: React.FC<HomeProps> = ({ featured, trending }) => {
-    const dispatch = useDispatch();
+const Home: React.FC<HomeProps> = ({ featured, trending, genres }) => {
+    const dispatch = useAppDispatch();
     const { loading: watchlistLoading, activeShows, keepWatching } = useWatchlist();
     const { genreResults, loading, hasNextPage } = useAppSelector(state => state.genre);
+
+    useEffect(() => {
+        // 初始化 genres
+        dispatch(resetGenreState());
+        dispatch(setGenres(genres));
+    }, [dispatch, genres]);
 
     const [sentryRef] = useInfiniteScroll({
         loading,
@@ -91,18 +96,14 @@ export const getStaticProps: GetStaticProps = async () => {
     const featured = await getShowById(FEATURED_SHOW);
     const trending = await getTrending();
     const genres = await getGenres();
-    const genreResults = await getShowsByGenres(genres.slice(0, INFINITE_SCROLL_SKIP));
 
     return {
         props: {
             featured,
             trending,
             genres,
-            [REDUX_INITIAL_STATE]: {
-                genre: { genres, genreResults, page: 0, loading: false, hasNextPage: true },
-            } satisfies Partial<AppState>,
         },
-        revalidate: 60 * 60 * 24, // 24 hours
+        // revalidate: 60 * 60 * 24, // 24 hours
     };
 };
 

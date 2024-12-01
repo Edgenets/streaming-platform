@@ -1,5 +1,4 @@
 import Bowser from "bowser";
-import { GetServerSidePropsContext } from "next";
 
 export const isMobile = (userAgent: string) => {
     const browser = Bowser.getParser(userAgent);
@@ -12,12 +11,13 @@ export const isIE = (userAgent: string) => {
     return browser.isBrowser("internet-explorer");
 };
 
-export const checkBrowserCompatibility = (ctx: GetServerSidePropsContext): boolean => {
-    const ua = ctx.req.headers["user-agent"];
+export const checkBrowserCompatibility = (): boolean => {
+    const userAgent = navigator.userAgent.toLowerCase();
 
-    if (!ua) {
-        return false;
-    }
+    // 检查基本的浏览器兼容性
+    const isCompatible =
+        /chrome|firefox|safari|edge/.test(userAgent) && 
+        !/trident|msie/.test(userAgent); // 排除 IE 浏览器
 
-    return !isMobile(ua) && !isIE(ua);
+    return isCompatible;
 };

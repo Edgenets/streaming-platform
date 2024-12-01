@@ -7,12 +7,14 @@ export default class MyDocument extends Document {
         const originalRenderPage = ctx.renderPage;
 
         try {
+            // 收集页面中的 styled-components 样式
             ctx.renderPage = () =>
                 originalRenderPage({
                     enhanceApp: App => props => sheet.collectStyles(<App {...props} />),
                 });
 
             const initialProps = await Document.getInitialProps(ctx);
+
             return {
                 ...initialProps,
                 styles: (
@@ -23,14 +25,17 @@ export default class MyDocument extends Document {
                 ),
             };
         } finally {
+            // 确保样式表被正确清理
             sheet.seal();
         }
     }
 
     render() {
         return (
-            <Html lang="en-US">
-                <Head />
+            <Html lang="en">
+                <Head>
+                    {/* 添加任何额外的元标签或全局样式 */}
+                </Head>
                 <body>
                     <Main />
                     <NextScript />
